@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>TurboScrollBar</title>
+
+    <style>
+        /* :root {
+            --shadow-size: 15;
+        } */
+
+        body {
+            margin: 0;
+            min-height: 500vh;
+            background-color: rgb(37, 48, 60);
+        }
+
+        ::-webkit-scrollbar {
+            width: .55%;
+            min-width: 10px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: rgb(37, 48, 60);
+        }
+
+        .test {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #000;
+            transition: box-shadow 1000ms ease;
+            box-shadow: 0 0 calc(15px * var(--scroll-factor)) calc(15px * var(--scroll-factor)) rgb(255, 192, 0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- <div class="test"></div> -->
+
+    <script type="module" src="./scripts/TurboScrollBar.js"></script>
+</body>
+
+</html>
