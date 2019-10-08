@@ -1,4 +1,7 @@
 import throttle from './throttle.js';
+import Easing from './Easing.js';
+
+window.Easing = Easing;
 
 class TurboScrollBar {
     constructor(color) {
@@ -6,16 +9,18 @@ class TurboScrollBar {
         this.root = document.documentElement;
         this.styleId = 'TurboScrollBar';
         this.isRun = false;
+        this.lastScrollPosition = pageYOffset;
 
         this.thumbHeight = innerHeight / (this.root.scrollHeight / innerHeight);
-        this.lastScrollPosition = pageYOffset;
 
         this.state = {
             shadowSize: 0,
-            targetSize: 15
+            targetSize: 0,
+            direction: -1
         };
 
-        this.scrollHandler = throttle(this.scrollHandler, 50);
+        // this.scrollHandler = throttle(this.scrollHandler, 50);
+        // this.scrollHandler = throttle(this.scrollHandler, 1000 / 60);
 
         this.init();
     }
@@ -32,38 +37,60 @@ class TurboScrollBar {
 
         // console.log('shadowSize: ', this.state.shadowSize, 'targetSize: ', this.state.targetSize);
         this.updateStyle();
-        this.changeShadow();
+        !this.isRun && this.changeShadow();
     }
 
     changeShadow() {
+        this.isRun = true;
         let { shadowSize, targetSize } = this.state;
-        console.log('shadowSize', shadowSize);
 
-        if (targetSize <= 0 && shadowSize <= 0) {
+        if (targetSize <= 1 && shadowSize <= 1) {
+            targetSize = 0;
+            shadowSize = 0;
+            this.setState({
+                shadowSize,
+                targetSize
+            });
             this.isRun = false;
             return;
         }
 
         if (shadowSize < targetSize) {
-            shadowSize++;
-        } else {
-            targetSize = 0;
-            shadowSize--;
+            shadowSize =
+                shadowSize +
+                (2 +
+                    Easing.easeOutQuart(shadowSize / this.thumbHeight) +
+                    Easing.easeInQuart(shadowSize / targetSize));
+        } else if (shadowSize >= targetSize) {
+            targetSize = 1;
+            shadowSize =
+                shadowSize -
+                (1 +
+                    Easing.easeInQuart(shadowSize / this.thumbHeight) +
+                    Easing.easeInCubic(targetSize / this.thumbHeight));
         }
+
+        // console.log('shadowSize', shadowSize);
 
         requestAnimationFrame(() => {
             this.setState({
                 shadowSize,
                 targetSize
             });
+
+            this.changeShadow();
         });
     }
 
     updateStyle() {
         let { shadowSize, direction } = this.state;
-        let offsetY = Math.ceil(direction * shadowSize) + 'px';
-        let blur = shadowSize + 'px';
-        let size = Math.ceil(shadowSize / 3) + 'px';
+        // let blur = shadowSize < this.thumbHeight ? shadowSize : this.thumbHeight;
+        let blur = (shadowSize / 2) * Easing.easeOutQuart(shadowSize / this.thumbHeight);
+        // let blur = 0;
+        let offsetY = Math.ceil(direction * blur * 2);
+        // let offsetY = Math.ceil(direction * shadowSize);
+
+        let size = Math.ceil(Math.abs(offsetY) - blur / 2);
 
         // console.log('offsetY: ', offsetY, 'blur: ', blur, 'size: ', size);
 
@@ -72,9 +99,7 @@ class TurboScrollBar {
         let styleContent = /* css */ `
             ::-webkit-scrollbar-thumb {
                 background-color: ${this.color};
-                transition: box-shadow 1000ms ease;
-                box-shadow: 0 ${offsetY} ${blur} ${size} ${this.color};
-                border-radius: 5px;
+                box-shadow: 0 ${offsetY}px ${blur}px ${size}px ${this.color};
             }
         `;
 
@@ -87,13 +112,24 @@ class TurboScrollBar {
         styleElem.textContent = styleContent;
     }
 
+    isChangeDirection(oldDirection, newDirection) {
+        return oldDirection * newDirection;
+    }
+
     scrollHandler = () => {
-        let { targetSize, direction } = this.state;
+        let { targetSize, shadowSize, direction } = this.state;
         // console.log('pageYOffset', pageYOffset);
 
+        this.thumbHeight = innerHeight / (this.root.scrollHeight / innerHeight);
         let diff = pageYOffset - this.lastScrollPosition;
         let newDirection = diff > 0 ? -1 : 1;
-        targetSize = targetSize + (diff * (direction * newDirection)) / 4;
+        targetSize = Math.abs(
+            shadowSize + (diff / 1.2) * this.isChangeDirection(direction, newDirection)
+        );
+
+        targetSize = targetSize <= this.thumbHeight ? targetSize : this.thumbHeight;
+
+        // targetSize = Math.abs(shadowSize + diff);
         this.lastScrollPosition = pageYOffset;
 
         this.setState({
@@ -106,11 +142,13 @@ class TurboScrollBar {
     };
 
     init() {
+        this.updateStyle();
+
         document.addEventListener('scroll', this.scrollHandler);
-        this.setState({
-            targetSize: 15,
-            direction: -1
-        });
+        // this.setState({
+        //     targetSize: 15,
+        //     direction: -1
+        // });
     }
 }
 
