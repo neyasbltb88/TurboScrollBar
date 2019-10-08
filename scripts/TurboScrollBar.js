@@ -36,8 +36,8 @@ class TurboScrollBar {
     updateStyle() {
         let { shadowSize, direction } = this.state;
         let blur = shadowSize / 1.5;
-        let size = shadowSize;
-        let offsetY = Math.ceil(direction * (blur + (size / 4) * 3));
+        let size = shadowSize / 2.2;
+        let offsetY = Math.ceil(direction * (blur + size / 8));
 
         let styleElem = document.querySelector(`#${this.styleId}`);
 
@@ -75,7 +75,7 @@ class TurboScrollBar {
     };
 
     init() {
-        new SmoothScroll(document, 100, 15);
+        new SmoothScroll(document, 150, 15);
 
         this.updateStyle();
 
