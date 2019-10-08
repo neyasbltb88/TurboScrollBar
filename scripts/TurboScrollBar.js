@@ -1,16 +1,21 @@
 import throttle from './throttle.js';
-// window.addEventListener('scroll', winScrollHandler);
 
 class TurboScrollBar {
     constructor(color) {
         this.color = color;
         this.root = document.documentElement;
         this.styleId = 'TurboScrollBar';
+        this.isRun = false;
+
+        this.thumbHeight = innerHeight / (this.root.scrollHeight / innerHeight);
+        this.lastScrollPosition = pageYOffset;
 
         this.state = {
             shadowSize: 0,
             targetSize: 15
         };
+
+        this.scrollHandler = throttle(this.scrollHandler, 50);
 
         this.init();
     }
@@ -32,7 +37,12 @@ class TurboScrollBar {
 
     changeShadow() {
         let { shadowSize, targetSize } = this.state;
-        if (targetSize <= 0 && shadowSize <= 0) return;
+        console.log('shadowSize', shadowSize);
+
+        if (targetSize <= 0 && shadowSize <= 0) {
+            this.isRun = false;
+            return;
+        }
 
         if (shadowSize < targetSize) {
             shadowSize++;
@@ -51,9 +61,9 @@ class TurboScrollBar {
 
     updateStyle() {
         let { shadowSize, direction } = this.state;
-        let offsetY = direction * shadowSize + 'px';
+        let offsetY = Math.ceil(direction * shadowSize) + 'px';
         let blur = shadowSize + 'px';
-        let size = shadowSize / 3 + 'px';
+        let size = Math.ceil(shadowSize / 3) + 'px';
 
         // console.log('offsetY: ', offsetY, 'blur: ', blur, 'size: ', size);
 
@@ -77,7 +87,26 @@ class TurboScrollBar {
         styleElem.textContent = styleContent;
     }
 
+    scrollHandler = () => {
+        let { targetSize, direction } = this.state;
+        // console.log('pageYOffset', pageYOffset);
+
+        let diff = pageYOffset - this.lastScrollPosition;
+        let newDirection = diff > 0 ? -1 : 1;
+        targetSize = targetSize + (diff * (direction * newDirection)) / 4;
+        this.lastScrollPosition = pageYOffset;
+
+        this.setState({
+            targetSize,
+            direction: newDirection
+        });
+
+        // console.log('diff', diff);
+        // console.log('targetSize', targetSize);
+    };
+
     init() {
+        document.addEventListener('scroll', this.scrollHandler);
         this.setState({
             targetSize: 15,
             direction: -1
