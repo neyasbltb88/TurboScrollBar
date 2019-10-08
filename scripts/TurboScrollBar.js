@@ -20,7 +20,7 @@ class TurboScrollBar {
         };
 
         // this.scrollHandler = throttle(this.scrollHandler, 50);
-        // this.scrollHandler = throttle(this.scrollHandler, 1000 / 60);
+        this.scrollHandler = throttle(this.scrollHandler, 1000 / 60);
 
         this.init();
     }
@@ -55,6 +55,10 @@ class TurboScrollBar {
             return;
         }
 
+        if (shadowSize === 0) {
+            shadowSize = Math.ceil(targetSize / 4);
+        }
+
         if (shadowSize < targetSize) {
             shadowSize = Math.ceil(
                 shadowSize +
@@ -65,12 +69,12 @@ class TurboScrollBar {
         } else if (shadowSize >= targetSize) {
             targetSize = 0;
             shadowSize = Math.ceil(
-                shadowSize - (2 + Easing.easeInQuart(shadowSize / this.thumbHeight))
+                shadowSize - (1 + Easing.easeInQuart(shadowSize / this.thumbHeight))
                 // Easing.easeInCubic(targetSize / this.thumbHeight)
             );
         }
 
-        console.log('shadowSize', shadowSize, ' / ', targetSize);
+        // console.log('shadowSize', shadowSize, ' / ', targetSize);
 
         requestAnimationFrame(() => {
             this.setState({
@@ -84,9 +88,9 @@ class TurboScrollBar {
 
     updateStyle() {
         let { shadowSize, targetSize, direction } = this.state;
-        let blur = shadowSize;
-        let size = shadowSize / 2;
-        let offsetY = Math.ceil(direction * (blur + size / 2));
+        let blur = shadowSize / 1.5;
+        let size = shadowSize;
+        let offsetY = Math.ceil(direction * (blur + (size / 4) * 3));
 
         let styleElem = document.querySelector(`#${this.styleId}`);
 
@@ -120,6 +124,7 @@ class TurboScrollBar {
         targetSize = Math.abs(shadowSize + diff * this.isChangeDirection(direction, newDirection));
 
         targetSize = targetSize <= this.thumbHeight ? targetSize : this.thumbHeight;
+        targetSize = targetSize * 0.7;
 
         // targetSize = Math.abs(shadowSize + diff);
         this.lastScrollPosition = pageYOffset;
